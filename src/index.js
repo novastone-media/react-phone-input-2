@@ -11,7 +11,10 @@ import CountryData from './CountryData.js';
 
 class PhoneInput extends React.Component {
   static propTypes = {
-    country: PropTypes.string,
+    country: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]),
     value: PropTypes.string,
 
     onlyCountries: PropTypes.arrayOf(PropTypes.string),
@@ -83,6 +86,7 @@ class PhoneInput extends React.Component {
     onBlur: PropTypes.func,
     onClick: PropTypes.func,
     onKeyDown: PropTypes.func,
+    onEnterKeyPress: PropTypes.func,
     isValid: PropTypes.oneOfType([
       PropTypes.bool,
       PropTypes.func,
@@ -467,7 +471,8 @@ class PhoneInput extends React.Component {
     }
   }
 
-  handleFlagDropdownClick = () => {
+  handleFlagDropdownClick = (e) => {
+    e.preventDefault();
     if (!this.state.showDropdown && this.props.disabled) return;
     const { preferredCountries, selectedCountry } = this.state
     const allCountries = preferredCountries.concat(this.state.onlyCountries)
@@ -489,12 +494,9 @@ class PhoneInput extends React.Component {
     const { value } = e.target;
     const { prefix } = this.props;
 
-    if (value === prefix) return this.setState({ formattedNumber: '' });
-
     let formattedNumber = this.props.disableCountryCode ? '' : prefix;
     let newSelectedCountry = this.state.selectedCountry;
     let freezeSelection = this.state.freezeSelection;
-
 
     if (!this.props.countryCodeEditable) {
       const mainCode = newSelectedCountry.hasAreaCodes ?
@@ -504,6 +506,8 @@ class PhoneInput extends React.Component {
       const updatedInput = prefix+mainCode;
       if (value.slice(0, updatedInput.length) !== updatedInput) return;
     }
+
+    if (value === prefix) return this.setState({ formattedNumber: '' });
 
     // Does not exceed 15 digit phone number limit
     if (value.replace(/\D/g, '').length > 15 && !this.state.enableLongNumbers) return;
@@ -647,7 +651,7 @@ class PhoneInput extends React.Component {
     const { keys } = this.props;
     const { target: { className } } = e;
 
-    if (className.includes('selected-flag') && e.which === keys.ENTER && !this.state.showDropdown) return this.handleFlagDropdownClick();
+    if (className.includes('selected-flag') && e.which === keys.ENTER && !this.state.showDropdown) return this.handleFlagDropdownClick(e);
     if (className.includes('form-control') && (e.which === keys.ENTER || e.which === keys.ESC)) return e.target.blur();
 
     if (!this.state.showDropdown || this.props.disabled) return;
@@ -748,8 +752,11 @@ class PhoneInput extends React.Component {
       } else {
         const iso2countries = allCountries.filter(({ iso2 }) =>
           [`${iso2}`].some(field => field.toLowerCase().includes(sanitizedSearchValue)))
+        // || '' - is a fix to prevent search of 'undefined' strings
+        // Since all the other values shouldn't be undefined, this fix was accepte
+        // but the structure do not looks very good
         const searchedCountries = allCountries.filter(({ name, localName, iso2 }) =>
-          [`${name}`, `${localName}`].some(field => field.toLowerCase().includes(sanitizedSearchValue)))
+          [`${name}`, `${localName || ''}`].some(field => field.toLowerCase().includes(sanitizedSearchValue)))
         this.scrollToTop()
         return [...new Set([].concat(iso2countries, searchedCountries))]
       }

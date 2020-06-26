@@ -42,6 +42,7 @@ declare module "react-phone-input-2" {
       data: CountryData | {}
     ): void;
     onKeyDown?(event: React.KeyboardEvent<HTMLInputElement>): void;
+    onEnterKeyPress?(event: React.KeyboardEvent<HTMLInputElement>): void;
     isValid?: ((
       value: string,
       country: object,
@@ -51,7 +52,7 @@ declare module "react-phone-input-2" {
   }
 
   export interface PhoneInputProps extends PhoneInputEventsProps, Style {
-    country?: string;
+    country?: string | number | null;
     value?: string;
 
     onlyCountries?: string[];
